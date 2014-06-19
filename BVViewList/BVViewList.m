@@ -8,6 +8,7 @@
 
 #import "BVViewList.h"
 #import "UIView+UIView_setFrameProperties.h"
+#import <Masonry/Masonry.h>
 
 #define TRANSITION_ANIMATION_DURATION_SECONDS 0.4
 
@@ -86,15 +87,36 @@
         self.yPosititions = [[NSMutableArray alloc] initWithCapacity:1];
         
         [view setTranslatesAutoresizingMaskIntoConstraints:NO];
+        
+        //Starting to replace this with Masonry
         //Position
         [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:0]];
         [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationLessThanOrEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:0]];
+    
+        
         //Size
         [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:view.frame.size.width]];
         [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:view.frame.size.height]];
+        
         //Center
         [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0]];
-        
+
+        /*
+        [view mas_makeConstraints:^(MASConstraintMaker *make) {
+            
+            //Position
+            make.top.equalTo(self.mas_top);
+            //Is this right?
+            make.bottom.lessThanOrEqualTo(self.mas_top);
+            
+            //Size
+            make.width.equalTo(view.mas_width);
+            make.height.equalTo(view.mas_height);
+            
+            //Center
+            make.centerX.equalTo(view.mas_centerX);
+        }];
+        */
         
         [self addSubview:view];
     }
@@ -117,29 +139,68 @@
 }
 
 - (void)insertView:(UIView *)view atIndex:(NSUInteger)idx animated:(BOOL)animated {
+    
+    //Make sure we're not inserting an an out-of-bounds index
     if (self.privateViews.count >= idx) {
         [self.privateViews insertObject:view atIndex:idx];
         
         //Add view
         [self addSubview:view];
+        
+        //Save the view's alpha to be used later, set it to 0 so that it's hidden for now
         CGFloat oldAlpha = view.alpha;
         view.alpha = 0.0;
+        
+        
         [view setTranslatesAutoresizingMaskIntoConstraints:NO];
+        
+        //Migrating to Masonry
+        
         //Size
         [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:view.frame.size.width]];
         [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:nil attribute:NSLayoutAttributeNotAnAttribute multiplier:1.0 constant:view.frame.size.height]];
         //Center
         [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0]];
         
+        
+        //Masonry autolayout code
+        /*
+        [view mas_updateConstraints:^(MASConstraintMaker *make) {
+            //Size
+            make.width.equalTo(view.mas_width);
+            make.height.equalTo(view.mas_height);
+            
+            //Center
+            make.centerX.equalTo(view.mas_centerX);
+        }];
+         */
+        
         if (self.privateViews.count > idx+1) {
             UIView *nextView = [self.privateViews objectAtIndex:idx+1];
+            
             if (idx > 0) {
+                //Not the top-most view
                 UIView *previousView = [self.privateViews objectAtIndex:idx-1];
                 //Pin inserted view under previous
+                
                 [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:previousView attribute:NSLayoutAttributeBottom multiplier:1.0 constant:self.innerViewSpacing]];
+                
+                /*
+                [view mas_updateConstraints:^(MASConstraintMaker *make) {
+                    make.top.equalTo(previousView.mas_bottom).with.offset(self.innerViewSpacing);
+                }];
+                 */
             } else {
                 //Pin inserted view to top
+                
                 [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:0]];
+                
+                /*
+                //Masonry autolayout code
+                [view mas_updateConstraints:^(MASConstraintMaker *make) {
+                    make.top.equalTo(self.mas_top);
+                }];
+                 */
             }
             
             //Pin next view under inserted view
@@ -160,6 +221,7 @@
                 NSLayoutConstraint *constraint = [self getConstraintForFirstItem:previousView forAttribute:NSLayoutAttributeBottom];
                 [self removeConstraint:constraint];
             } else {
+                //First view
                 //Pin view to top
                 [self addConstraint:[NSLayoutConstraint constraintWithItem:view attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationLessThanOrEqual toItem:self attribute:NSLayoutAttributeTop multiplier:1.0 constant:0]];
             }
