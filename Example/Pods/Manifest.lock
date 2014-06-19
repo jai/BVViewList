@@ -1,0 +1,17 @@
+PODS:
+  - BVViewList (1.0.1):
+    - Masonry (~> 0.5)
+  - Masonry (0.5.2)
+
+DEPENDENCIES:
+  - BVViewList (from `../`)
+
+EXTERNAL SOURCES:
+  BVViewList:
+    :path: ../
+
+SPEC CHECKSUMS:
+  BVViewList: e015efd7b66ecb0431e94ed4690f6c463e28d315
+  Masonry: ec0189e1a07af00913e4a1a335ea76887adc86e1
+
+COCOAPODS: 0.33.1

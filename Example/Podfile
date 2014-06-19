@@ -1,0 +1,3 @@
+xcodeproj './BVViewListDemo.xcodeproj'
+
+pod 'BVViewList', :path => '../'
